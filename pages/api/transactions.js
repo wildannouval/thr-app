@@ -13,6 +13,11 @@ export default function handler(req, res) {
             return res.status(400).json({ error: 'Data tidak lengkap' })
         }
 
+        if (isNaN(amount) || Number(amount) === 0) {
+            return res.status(400).json({ error: 'Jumlah tidak valid' })
+        }
+        
+
         const newTransaction = {
             id: generateId(),
             walletId: Number(walletId),

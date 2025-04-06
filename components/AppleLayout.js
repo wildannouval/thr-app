@@ -10,6 +10,7 @@ import {
     HiMenu,
     HiX
 } from 'react-icons/hi'
+import ThemeSwitcher from './ThemeSwitcher'
 
 export default function AppleLayout({ children }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -55,6 +56,7 @@ export default function AppleLayout({ children }) {
                             <span className="font-medium">{item.text}</span>
                         </Link>
                     ))}
+                {/* <ThemeSwitcher /> */}
                 </nav>
             </aside>
 
@@ -97,6 +99,7 @@ export default function AppleLayout({ children }) {
                                     <span className="font-medium">{item.text}</span>
                                 </Link>
                             ))}
+                            {/* <ThemeSwitcher /> */}
                         </nav>
                     </div>
                 </div>

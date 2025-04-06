@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { formatCurrency, parseFormattedNumber, getWalletName, getCategoryName } from '../utils/helpers'
 import { loadData, saveData, generateId } from '../utils/storage'
-import { HiArrowUp, HiArrowDown, HiPlus, HiArrowRight, HiX, HiCheck, HiCash, HiCreditCard, HiDatabase } from 'react-icons/hi'
+import { HiArrowUp, HiArrowDown, HiPlus, HiArrowRight, HiX, HiCheck, HiCash, HiCreditCard, HiDatabase, HiSearch } from 'react-icons/hi'
 
 // Client-side only components
 const TransactionList = dynamic(() => import('../components/TransactionList'), {
@@ -57,6 +57,7 @@ export default function Home() {
   const [showTransferForm, setShowTransferForm] = useState(false)
   const [activeTab, setActiveTab] = useState('expense') // 'expense' or 'income'
   const [toast, setToast] = useState(null)
+  const [showFilters, setShowFilters] = useState(false)
 
   // Transaction form state
   const [transactionForm, setTransactionForm] = useState({
@@ -342,8 +343,17 @@ export default function Home() {
     }
 
     return filtered;
-  };
-  
+  }
+
+  const getWalletIcon = (type) => {
+    switch (type) {
+      case 'cash': return <HiCash className="text-yellow-500" size={20} />
+      case 'bank': return <HiCreditCard className="text-blue-500" size={20} />
+      case 'ewallet': return <HiDatabase className="text-green-500" size={20} />
+      default: return <HiCreditCard className="text-gray-500" size={20} />
+    }
+  }
+
 
   return (
     <div className="p-6 pb-24">
@@ -352,8 +362,86 @@ export default function Home() {
 
       <h1 className="text-2xl font-semibold text-gray-900 mb-8">Ringkasan</h1>
 
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        {/* Header with Balance */}
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h2 className="text-gray-500 text-sm font-medium mb-1">Saldo Total</h2>
+            {isLoading ? (
+              <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+            ) : (
+              <p className="text-2xl font-bold text-gray-900">
+                {formatCurrency(totalBalance)}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => setShowTransferCard(!showTransferCard)}
+            className="text-sm text-blue-500 hover:text-blue-600"
+          >
+            {showTransferCard ? 'Sembunyikan Transfer' : 'Tampilkan Transfer'}
+          </button>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Income Card */}
+          <div className="bg-green-50 p-3 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="bg-green-100 p-1 rounded-full">
+                <HiArrowUp className="text-green-500" size={14} />
+              </div>
+              <p className="text-green-500 text-xs font-medium">Pemasukan</p>
+            </div>
+            {isLoading ? (
+              <div className="h-5 bg-gray-200 rounded mt-1 w-3/4 animate-pulse"></div>
+            ) : (
+              <p className="font-semibold text-gray-900 mt-1">
+                {formatCurrency(incomeTotal)}
+              </p>
+            )}
+          </div>
+
+          {/* Expense Card */}
+          <div className="bg-red-50 p-3 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="bg-red-100 p-1 rounded-full">
+                <HiArrowDown className="text-red-500" size={14} />
+              </div>
+              <p className="text-red-500 text-xs font-medium">Pengeluaran</p>
+            </div>
+            {isLoading ? (
+              <div className="h-5 bg-gray-200 rounded mt-1 w-3/4 animate-pulse"></div>
+            ) : (
+              <p className="font-semibold text-gray-900 mt-1">
+                {formatCurrency(expenseTotal)}
+              </p>
+            )}
+          </div>
+
+          {/* Transfer Card - Conditionally shown */}
+          {showTransferCard && (
+            <div className="bg-blue-50 p-3 rounded-lg col-span-2">
+              <div className="flex items-center space-x-2">
+                <div className="bg-blue-100 p-1 rounded-full">
+                  <HiArrowRight className="text-blue-500" size={14} />
+                </div>
+                <p className="text-blue-500 text-xs font-medium">Transfer</p>
+              </div>
+              {isLoading ? (
+                <div className="h-5 bg-gray-200 rounded mt-1 w-3/4 animate-pulse"></div>
+              ) : (
+                <p className="font-semibold text-gray-900 mt-1">
+                  {formatCurrency(transferOutTotal)}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Card Saldo Total */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 p-6 mb-8">
+      {/* <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50 p-6 mb-8">
         <div className="flex justify-between items-start">
           <div>
             <h2 className="text-gray-500 text-sm font-medium mb-1">Saldo Total</h2>
@@ -405,10 +493,52 @@ export default function Home() {
             </div>
           )}
         </div>
+      </div> */}
+
+      {/* Quick Actions */}
+      <div className="flex space-x-3 mb-6">
+        <button
+          onClick={() => {
+            setShowTransactionForm(true)
+            setShowTransferForm(false)
+            setActiveTab('expense')
+          }}
+          className="flex-1 bg-white border border-red-100 py-3 px-4 rounded-xl flex flex-col items-center space-y-1 shadow-sm"
+        >
+          <div className="bg-red-50 p-2 rounded-full">
+            <HiArrowDown className="text-red-500" size={18} />
+          </div>
+          <span className="text-xs text-gray-700">Pengeluaran</span>
+        </button>
+        <button
+          onClick={() => {
+            setShowTransactionForm(true)
+            setShowTransferForm(false)
+            setActiveTab('income')
+          }}
+          className="flex-1 bg-white border border-green-100 py-3 px-4 rounded-xl flex flex-col items-center space-y-1 shadow-sm"
+        >
+          <div className="bg-green-50 p-2 rounded-full">
+            <HiArrowUp className="text-green-500" size={18} />
+          </div>
+          <span className="text-xs text-gray-700">Pemasukan</span>
+        </button>
+        <button
+          onClick={() => {
+            setShowTransferForm(true)
+            setShowTransactionForm(false)
+          }}
+          className="flex-1 bg-white border border-blue-100 py-3 px-4 rounded-xl flex flex-col items-center space-y-1 shadow-sm"
+        >
+          <div className="bg-blue-50 p-2 rounded-full">
+            <HiArrowRight className="text-blue-500" size={18} />
+          </div>
+          <span className="text-xs text-gray-700">Transfer</span>
+        </button>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex space-x-3 mb-8">
+      {/* <div className="flex space-x-3 mb-8">
         <button
           onClick={() => {
             setShowTransactionForm(true)
@@ -441,7 +571,7 @@ export default function Home() {
           <HiArrowRight size={18} />
           <span>Transfer</span>
         </button>
-      </div>
+      </div> */}
 
       {/* Transaction Form Modal */}
       {showTransactionForm && (
@@ -649,8 +779,70 @@ export default function Home() {
         </div>
       )}
 
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Dompet Saya</h2>
+
+        {/* Horizontal Scroll Container */}
+        <div className="relative">
+          <div
+            className="flex space-x-3 overflow-x-auto pb-4 hide-scrollbar"
+            style={{
+              scrollbarWidth: 'none', // Firefox
+              msOverflowStyle: 'none', // IE/Edge
+            }}
+          >
+            {/* Custom scrollbar styling for WebKit browsers */}
+            <style jsx>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
+            {isLoading ? (
+              [...Array(3)].map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 animate-pulse h-20">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ))
+            ) : wallets.length > 0 ? (
+              wallets.map(wallet => (
+                <div
+                  key={wallet.id}
+                  className="flex-shrink-0 w-64 bg-white rounded-xl p-4 border border-gray-200 flex items-center"
+                >
+                  <div className={`p-2 rounded-full mr-3 ${wallet.type === 'cash' ? 'bg-yellow-100' :
+                    wallet.type === 'bank' ? 'bg-blue-100' :
+                      wallet.type === 'ewallet' ? 'bg-green-100' : 'bg-gray-100'
+                    }`}>
+                    {wallet.type === 'cash' ? <HiCash className="text-yellow-500" size={18} /> :
+                      wallet.type === 'bank' ? <HiCreditCard className="text-blue-500" size={18} /> :
+                        wallet.type === 'ewallet' ? <HiDatabase className="text-green-500" size={18} /> :
+                          <HiCreditCard className="text-gray-500" size={18} />}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-medium text-gray-900 truncate">{wallet.name}</h3>
+                    <p className="text-gray-500 text-sm">{formatCurrency(wallet.balance)}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex-shrink-0 w-full bg-white rounded-xl p-4 border border-gray-200">
+                <p className="text-gray-500">Belum ada dompet</p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-center space-x-1 mt-2">
+            {wallets.map((_, i) => (
+              <div key={i} className="w-2 h-2 rounded-full bg-gray-300"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+
       {/* Daftar Dompet */}
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">Dompet Saya</h2>
+      {/* <h2 className="text-xl font-semibold text-gray-900 mb-4">Dompet Saya</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
         {isLoading ? (
           [...Array(2)].map((_, i) => (
@@ -661,14 +853,17 @@ export default function Home() {
           ))
         ) : wallets.length > 0 ? (
           wallets.map(wallet => (
-            <div key={wallet.id} className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 flex items-center">
-              <div className="bg-blue-500/10 p-2 rounded-full mr-3">
-                <HiCreditCard className="text-blue-500" size={18} />
+            <div key={wallet.id} className="bg-white rounded-xl p-4 border border-gray-100">
+              <div className="flex items-center mb-2">
+                <div className={`p-2 rounded-full mr-2 ${wallet.type === 'cash' ? 'bg-yellow-50' :
+                  wallet.type === 'bank' ? 'bg-blue-50' :
+                    wallet.type === 'ewallet' ? 'bg-green-50' : 'bg-gray-50'
+                  }`}>
+                  {getWalletIcon(wallet.type)}
+                </div>
+                <h3 className="font-medium text-sm text-gray-900 truncate">{wallet.name}</h3>
               </div>
-              <div>
-                <h3 className="font-medium text-gray-900">{wallet.name}</h3>
-                <p className="text-gray-500 text-sm">{formatCurrency(wallet.balance)}</p>
-              </div>
+              <p className="text-gray-500 text-sm">{formatCurrency(wallet.balance)}</p>
             </div>
           ))
         ) : (
@@ -676,15 +871,104 @@ export default function Home() {
             <p className="text-gray-500">Belum ada dompet</p>
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Transaksi Terakhir */}
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">Transaksi Terakhir</h2>
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900 items-center justify-center">Transaksi Terakhir</h2>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="text-blue-500 text-sm"
+          >
+            {showFilters ? 'Sembunyikan' : 'Filter'}
+          </button>
+        </div>
+      </div>
+
+
+      {/* Filter Section */}
+      {showFilters && (
+        <div className="bg-white rounded-xl p-4 mb-6 shadow-sm animate-slide-down">
+          <div className="relative mb-4">
+            <HiSearch className="absolute left-3 top-3.5 text-gray-400" size={18} />
+            <input
+              type="text"
+              placeholder="Cari transaksi..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Kategori</label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+              >
+                <option value="">Semua Kategori</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Tanggal</label>
+              <select
+                value={dateRange.start ? 'custom' : ''}
+                onChange={(e) => {
+                  if (e.target.value === 'custom') {
+                    // When selecting custom, initialize with today's date
+                    const today = new Date().toISOString().split('T')[0]
+                    setDateRange({ start: today, end: today })
+                  } else {
+                    // When selecting "All", clear the date range
+                    setDateRange({ start: '', end: '' })
+                  }
+                }}
+                className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+              >
+                <option value="">Semua</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Show date inputs only when custom is selected */}
+          {dateRange.start && (
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Dari</label>
+                <input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                  max={dateRange.end || ''}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Sampai</label>
+                <input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                  min={dateRange.start || ''}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Search and Filter Section */}
-      <div className="mb-4 space-y-3">
-        {/* Search Input */}
-        <div className="relative">
+      {/* <div className="mb-4 space-y-3"> */}
+      {/* Search Input */}
+      {/* <div className="relative">
           <input
             type="text"
             placeholder="Cari transaksi..."
@@ -699,9 +983,9 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Category Filter */}
-          <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3"> */}
+      {/* Category Filter */}
+      {/* <div>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -712,10 +996,10 @@ export default function Home() {
                 <option key={category.id} value={category.id}>{category.name}</option>
               ))}
             </select>
-          </div>
+          </div> */}
 
-          {/* Date Range Filter */}
-          <div className="flex space-x-2">
+      {/* Date Range Filter */}
+      {/* <div className="flex space-x-2">
             <input
               type="date"
               value={dateRange.start}
@@ -731,10 +1015,10 @@ export default function Home() {
               placeholder="Sampai Tanggal"
             />
           </div>
-        </div>
+        </div> */}
 
-        {/* Reset Filters Button */}
-        {(searchQuery || categoryFilter || dateRange.start || dateRange.end) && (
+      {/* Reset Filters Button */}
+      {/* {(searchQuery || categoryFilter || dateRange.start || dateRange.end) && (
           <button
             onClick={() => {
               setSearchQuery('');
@@ -746,7 +1030,7 @@ export default function Home() {
             Reset Filter
           </button>
         )}
-      </div>
+      </div> */}
 
       {/* Transaction List */}
       <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/50 overflow-hidden">
@@ -770,10 +1054,10 @@ export default function Home() {
                   <div>
                     <div className="flex items-center">
                       <div className={`p-2 rounded-full mr-3 ${transaction.isTransfer
-                          ? 'bg-blue-500/10 text-blue-500'
-                          : transaction.amount > 0
-                            ? 'bg-green-500/10 text-green-500'
-                            : 'bg-red-500/10 text-red-500'
+                        ? 'bg-blue-500/10 text-blue-500'
+                        : transaction.amount > 0
+                          ? 'bg-green-500/10 text-green-500'
+                          : 'bg-red-500/10 text-red-500'
                         }`}>
                         {transaction.isTransfer ? (
                           <HiArrowRight size={16} />
@@ -797,10 +1081,10 @@ export default function Home() {
                     )}
                   </div>
                   <div className={`text-right ${transaction.isTransfer
-                      ? 'text-blue-500'
-                      : transaction.amount > 0
-                        ? 'text-green-500'
-                        : 'text-red-500'
+                    ? 'text-blue-500'
+                    : transaction.amount > 0
+                      ? 'text-green-500'
+                      : 'text-red-500'
                     }`}>
                     <p className="font-medium">
                       {transaction.isTransfer && transaction.amount < 0 ? '-' : ''}

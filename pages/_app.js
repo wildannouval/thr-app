@@ -1,12 +1,15 @@
 import AppleLayout from '@/components/AppleLayout'
 import Layout from '../components/Layout'
 import '../styles/globals.css'
+import { ThemeProvider } from 'next-themes';
 
 function MyApp({ Component, pageProps }) {
   return (
-    <AppleLayout>
-      <Component {...pageProps} />
-    </AppleLayout>
+    // <ThemeProvider attribute="class">
+      <AppleLayout>
+        <Component {...pageProps} />
+      </AppleLayout>
+    // </ThemeProvider>
   )
 }
 

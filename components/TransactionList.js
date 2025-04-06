@@ -27,7 +27,7 @@ export default function TransactionList({ transactions }) {
                                 <p className="font-medium text-gray-900">
                                     {getCategoryName(transaction.categoryId)}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-gray-500 mt-1" title={new Date(transaction.date).toLocaleString()}>
                                     {new Date(transaction.date).toLocaleDateString('id-ID', {
                                         day: 'numeric',
                                         month: 'short',
